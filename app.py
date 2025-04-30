@@ -16,7 +16,7 @@ else:
     plt.rcParams['font.family'] = 'DejaVu Sans'
 plt.rcParams['axes.unicode_minus'] = False
 
-st.title("광역 및 지방 데이터 통합 앱")
+st.title("용수수요량 예측 시뮬레이션")
 
 # 불러올 파일들 (xls 확장자 사용)
 file_dict = {
@@ -202,10 +202,13 @@ try:
         future = model.make_future_dataframe(periods=forecast_period, freq='H')
         forecast = model.predict(future)
 
-        model.plot(forecast, ax=axes[i])
-        axes[i].set_title(f'{code}_Tank_Flow Forecast')
+        axes[i].plot(df_prophet['ds'], df_prophet['y'], label='Actual', color='blue')
+        axes[i].plot(forecast['ds'], forecast['yhat'], label='Forecast', color='orange')
+        axes[i].fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], color='orange', alpha=0.2)
+        axes[i].set_title(f'{code}_Tank_Flow Forecast vs Actual')
         axes[i].set_xlabel('Date')
         axes[i].set_ylabel('Flow')
+        axes[i].legend()
 
     for j in range(len(site_codes), len(axes)):
         fig.delaxes(axes[j])
