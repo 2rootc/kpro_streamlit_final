@@ -57,6 +57,30 @@ try:
     st.success("\u2705 데이터 불러오기 및 병합 및 컬럼명 지정 완료!")
     st.dataframe(df.head())
 
+    # object → numeric 변환
+    df = df.replace({',': ''}, regex=True)
+    df = df.replace({'-': pd.NA})
+    df = df.apply(pd.to_numeric, errors='coerce')
+
+    # 숫자형 데이터만 선택
+    numeric_data = df.select_dtypes(include=[float, int])
+
+    # 사용자 선택 UI (멀티셀렉트로 변경)
+    selected_columns = st.multiselect("시계열 그래프로 확인할 항목을 선택하세요:", numeric_data.columns, default=numeric_data.columns[:1])
+
+    if selected_columns:
+        fig, ax = plt.subplots(figsize=(12, 5))
+        for col in selected_columns:
+            ax.plot(numeric_data.index, numeric_data[col], label=col)
+        ax.set_title("선택된 항목 시계열 그래프")
+        ax.set_xlabel('날짜')
+        ax.set_ylabel('값')
+        ax.legend()
+        ax.grid(True)
+        st.pyplot(fig)
+    else:
+        st.info("📌 하나 이상의 항목을 선택해주세요.")
+
 except ModuleNotFoundError as me:
     st.error("\u274c 필수 라이브러리가 설치되어 있지 않습니다. requirements.txt 또는 pip install 로 누락된 패키지를 설치하세요.")
     st.code(str(me))
