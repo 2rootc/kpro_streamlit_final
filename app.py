@@ -139,13 +139,7 @@ try:
     else:
         st.info("📌 하나 이상의 항목을 선택해주세요.")
 
-except ModuleNotFoundError as me:
-    st.error("\u274c 필수 라이브러리가 설치되어 있지 않습니다. requirements.txt 또는 pip install 로 누락된 패키지를 설치하세요.")
-    st.code(str(me))
     # Prophet 예측 및 성능 평가
-    from prophet import Prophet
-    from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-
     site_codes = ['JW', 'STI', 'SS', 'TA', 'MK', 'JM', 'YY']
     forecast_period = 48
     results = []
@@ -218,6 +212,8 @@ except ModuleNotFoundError as me:
 
     plt.tight_layout()
     st.pyplot(fig)
+
+
 
 except ModuleNotFoundError as me:
     st.error("❌ 필수 라이브러리가 설치되어 있지 않습니다. requirements.txt 또는 pip install 로 누락된 패키지를 설치하세요.")
