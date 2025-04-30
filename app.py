@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import math
+from prophet import Prophet
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # 한글 폰트 설정 (자동 환경 감지)
 import platform
@@ -139,5 +142,85 @@ try:
 except ModuleNotFoundError as me:
     st.error("\u274c 필수 라이브러리가 설치되어 있지 않습니다. requirements.txt 또는 pip install 로 누락된 패키지를 설치하세요.")
     st.code(str(me))
+    # Prophet 예측 및 성능 평가
+    from prophet import Prophet
+    from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+    site_codes = ['JW', 'STI', 'SS', 'TA', 'MK', 'JM', 'YY']
+    forecast_period = 48
+    results = []
+
+    for code in site_codes:
+        col_name = f'{code}_Tank_Flow'
+        if col_name not in processed_df.columns:
+            continue
+
+        df_prophet = processed_df[[col_name]].copy()
+        df_prophet['ds'] = processed_df.index
+        df_prophet.rename(columns={col_name: 'y'}, inplace=True)
+        df_prophet = df_prophet[['ds', 'y']]
+
+        model = Prophet()
+        model.fit(df_prophet)
+
+        future = model.make_future_dataframe(periods=forecast_period, freq='H')
+        forecast = model.predict(future)
+
+        merged = pd.merge(forecast[['ds', 'yhat']], df_prophet[['ds', 'y']], on='ds', how='inner')
+
+        mae = mean_absolute_error(merged['y'], merged['yhat'])
+        mse = mean_squared_error(merged['y'], merged['yhat'])
+        rmse = np.sqrt(mse)
+        r2 = r2_score(merged['y'], merged['yhat'])
+        mape = np.mean(np.abs((merged['y'] - merged['yhat']) / merged['y'].replace(0, np.nan))) * 100
+
+        results.append({
+            '배수지': code,
+            'MAE': round(mae, 3),
+            'MSE': round(mse, 3),
+            'RMSE': round(rmse, 3),
+            'MAPE(%)': round(mape, 2),
+            'R²': round(r2, 3)
+        })
+
+    performance_df = pd.DataFrame(results)
+    st.subheader("📊 Prophet 기반 배수지별 예측 성능 요약")
+    st.dataframe(performance_df)
+
+    # 예측 그래프 시각화
+    n_cols = 2
+    n_rows = math.ceil(len(site_codes) / n_cols)
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 7, n_rows * 4))
+    axes = axes.flatten()
+
+    for i, code in enumerate(site_codes):
+        col_name = f'{code}_Tank_Flow'
+        if col_name not in processed_df.columns:
+            continue
+
+        df_prophet = processed_df[[col_name]].copy()
+        df_prophet['ds'] = processed_df.index
+        df_prophet.rename(columns={col_name: 'y'}, inplace=True)
+        df_prophet = df_prophet[['ds', 'y']]
+
+        model = Prophet()
+        model.fit(df_prophet)
+        future = model.make_future_dataframe(periods=forecast_period, freq='H')
+        forecast = model.predict(future)
+
+        model.plot(forecast, ax=axes[i])
+        axes[i].set_title(f'{code}_Tank_Flow Forecast')
+        axes[i].set_xlabel('Date')
+        axes[i].set_ylabel('Flow')
+
+    for j in range(len(site_codes), len(axes)):
+        fig.delaxes(axes[j])
+
+    plt.tight_layout()
+    st.pyplot(fig)
+
+except ModuleNotFoundError as me:
+    st.error("❌ 필수 라이브러리가 설치되어 있지 않습니다. requirements.txt 또는 pip install 로 누락된 패키지를 설치하세요.")
+    st.code(str(me))
 except Exception as e:
-    st.error("\u274c 파일을 불러오는 도중 오류 발생: " + str(e))
+    st.error("❌ 파일을 불러오는 도중 오류 발생: " + str(e))
