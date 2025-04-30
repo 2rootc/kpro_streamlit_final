@@ -35,7 +35,26 @@ try:
     df.index = pd.to_datetime(df.index, errors='coerce')
     df = df[~df.index.isna()]
 
-    st.success("\u2705 데이터 불러오기 및 병합 완료!")
+    # 컬럼명 변경
+    df.columns = [
+        'JW_Branch_Flow','JW_Branch_Pressure','JW_Branch_OpenRate',
+        'SS_Branch_Flow','SS_Branch_Pressure',
+        'STI_Branch_Flow','STI_Branch_Pressure','STI_Branch_OpenRate',
+        'TA_Branch_Flow','TA_Branch_Pressure',
+        'YY_Branch_Flow','YY_Branch_Pressure','YY_Branch_OpenRate',
+        'MK_Branch_Flow','MK_Branch_Pressure','MK_Branch_OpenRate',
+        'JW_Tank_Level#1','JW_Tank_Level#2','JW_Tank_Flow',
+        'SS_Tank_Input_Flow','SS_Tank_Input_OpenRate#1','SS_Tank_Input_OpenRate#2',
+        'SS_Tank_Level#1','SS_Tank_Level#2','SS_Tank_Flow',
+        'STI_Tank_Input_Flow','STI_Tank_Level#1','STI_Tank_Level#2','STI_Tank_Flow',
+        'TA_Tank_Input_OpenRate#1','TA_Tank_Input_OpenRate#2','TA_Tank_Level#1','TA_Tank_Level#2','TA_Tank_Flow',
+        'YY_Tank_Level#1','YY_Tank_Level#2','YY_Tank_Flow',
+        'MK_Tank_Level#1','MK_Tank_Level#2','MK_Tank_Flow#1(old)','MK_Tank_Flow#2(new)',
+        'JM_Tank_Input_Flow','JM_Tank_Input_OpenRate#1','JM_Tank_Input_OpenRate#2',
+        'JM_Tank_Level#1','JM_Tank_Level#2','JM_Tank_Flow#1(new)','JM_Tank_Flow#2(old)'
+    ]
+
+    st.success("\u2705 데이터 불러오기 및 병합 및 컬럼명 지정 완료!")
     st.dataframe(df.head())
 
 except ModuleNotFoundError as me:
