@@ -8,19 +8,19 @@ plt.rcParams['axes.unicode_minus'] = False
 
 st.title("광역 및 지방 데이터 통합 앱")
 
-# 불러올 파일들
+# 불러올 파일들 (xls 확장자 사용)
 file_dict = {
-    "2023_광역": "2023_광역.xlsx",
-    "2023_지방": "2023_지방.xlsx",
-    "2024_광역": "2024_광역.xlsx",
-    "2024_지방": "2024_지방.xlsx"
+    "2023_광역": "2023_광역.xls",
+    "2023_지방": "2023_지방.xls",
+    "2024_광역": "2024_광역.xls",
+    "2024_지방": "2024_지방.xls"
 }
 
 # 읽기 및 병합
 dfs = {}
 try:
     for key, fname in file_dict.items():
-        dfs[key] = pd.read_excel(fname).iloc[1:-1, :]
+        dfs[key] = pd.read_excel(fname, engine='xlrd').iloc[1:-1, :]
 
     # 연도별 병합
     gw = pd.concat([dfs["2023_광역"], dfs["2024_광역"]], ignore_index=True)
