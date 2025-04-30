@@ -84,8 +84,41 @@ try:
     df = df.replace({'-': pd.NA})
     df = df.apply(pd.to_numeric, errors='coerce')
 
+    # 이상치 제거 및 전처리
+    processed_df = df.copy()
+    from sklearn.preprocessing import StandardScaler
+    scaler_standard = StandardScaler()
+
+    # 전처리 대상 컬럼: flow, level 포함
+    target_columns = [col for col in processed_df.columns if any(kw in col.lower() for kw in ['flow', 'level'])]
+
+    for col in target_columns:
+        series = processed_df[col]
+
+        # 1. 음수 제거 (flow에만)
+        if 'flow' in col.lower():
+            series = series.mask(series < 0, np.nan)
+
+        # 2. 이상치 제거 (IQR 방식)
+        q1 = series.quantile(0.25)
+        q3 = series.quantile(0.75)
+        iqr = q3 - q1
+        lower = q1 - 1.5 * iqr
+        upper = q3 + 1.5 * iqr
+        series = series.mask((series < lower) | (series > upper), np.nan)
+
+        # 3. 결측값 보간
+        series = series.interpolate(method='linear', limit_direction='both')
+
+        # 4. 수위(level)만 표준화하고 원본에 덮어쓰기
+        if 'level' in col.lower():
+            series = scaler_standard.fit_transform(series.values.reshape(-1, 1)).flatten()
+
+        # 5. 결과 반영
+        processed_df[col] = series
+
     # 숫자형 데이터만 선택
-    numeric_data = df.select_dtypes(include=[float, int])
+    numeric_data = processed_df.select_dtypes(include=[float, int])
 
     # 사용자 선택 UI (멀티셀렉트로 변경)
     selected_columns = st.multiselect("시계열 그래프로 확인할 항목을 선택하세요:", numeric_data.columns, default=numeric_data.columns[:1])
@@ -93,7 +126,7 @@ try:
     if selected_columns:
         fig, ax = plt.subplots(figsize=(12, 5))
         for col in selected_columns:
-            ax.plot(numeric_data.index, numeric_data[col], label=col)
+            ax.plot(processed_df.index, numeric_data[col], label=col)
         ax.set_title("Selected Time Series")
         ax.set_xlabel('Date')
         ax.set_ylabel('Value')
