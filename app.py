@@ -127,15 +127,37 @@ try:
     selected_columns = st.multiselect("시계열 그래프로 확인할 항목을 선택하세요:", numeric_data.columns, default=numeric_data.columns[:1])
 
     if selected_columns:
-        fig, ax = plt.subplots(figsize=(12, 5))
-        for col in selected_columns:
-            ax.plot(processed_df.index, numeric_data[col], label=col)
-        ax.set_title("Selected Time Series")
-        ax.set_xlabel('Date')
-        ax.set_ylabel('Value')
-        ax.legend()
-        ax.grid(True)
-        st.pyplot(fig)
+        import plotly.graph_objects as go
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=filtered_actual['ds'], y=filtered_actual['y'], mode='lines', name='Actual', line=dict(color='blue')))
+    fig.add_trace(go.Scatter(x=filtered_forecast['ds'], y=filtered_forecast['yhat'], mode='lines', name='Forecast', line=dict(color='orange')))
+    fig.add_trace(go.Scatter(
+        x=filtered_forecast['ds'],
+        y=filtered_forecast['yhat_upper'],
+        mode='lines',
+        name='Upper Bound',
+        line=dict(width=0),
+        showlegend=False
+    ))
+    fig.add_trace(go.Scatter(
+        x=filtered_forecast['ds'],
+        y=filtered_forecast['yhat_lower'],
+        mode='lines',
+        name='Lower Bound',
+        line=dict(width=0),
+        fill='tonexty',
+        fillcolor='rgba(255,165,0,0.2)',
+        showlegend=True
+    ))
+    fig.update_layout(
+        title=f'{selected_site} Tank Flow Forecast vs Actual',
+        xaxis_title='Date',
+        yaxis_title='Flow',
+        legend=dict(x=0, y=1),
+        height=500
+    )
+    st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("📌 하나 이상의 항목을 선택해주세요.")
 
@@ -184,6 +206,11 @@ try:
     # 예측 그래프 시각화
     st.subheader("📈 예측 결과 시각화")
     selected_site = st.selectbox("예측 결과를 확인할 배수지를 선택하세요:", site_codes)
+    date_range = st.slider("📅 예측 결과 표시 기간을 선택하세요:",
+                           min_value=processed_df.index.min().to_pydatetime(),
+                           max_value=future['ds'].max().to_pydatetime(),
+                           value=(processed_df.index.min().to_pydatetime(), future['ds'].max().to_pydatetime()),
+                           format="YYYY-MM-DD")
 
     col_name = f'{selected_site}_Tank_Flow'
     df_prophet = processed_df[[col_name]].copy()
@@ -197,9 +224,12 @@ try:
     forecast = model.predict(future)
 
     fig, ax = plt.subplots(figsize=(12, 5))
-    ax.plot(df_prophet['ds'], df_prophet['y'], label='Actual', color='blue')
-    ax.plot(forecast['ds'], forecast['yhat'], label='Forecast', color='orange')
-    ax.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], color='orange', alpha=0.2)
+    filtered_actual = df_prophet[(df_prophet['ds'] >= date_range[0]) & (df_prophet['ds'] <= date_range[1])]
+    filtered_forecast = forecast[(forecast['ds'] >= date_range[0]) & (forecast['ds'] <= date_range[1])]
+
+    ax.plot(filtered_actual['ds'], filtered_actual['y'], label='Actual', color='blue')
+    ax.plot(filtered_forecast['ds'], filtered_forecast['yhat'], label='Forecast', color='orange')
+    ax.fill_between(filtered_forecast['ds'], filtered_forecast['yhat_lower'], filtered_forecast['yhat_upper'], color='orange', alpha=0.2)
     ax.set_title(f'{selected_site} Tank Flow Forecast vs Actual')
     ax.set_xlabel('Date')
     ax.set_ylabel('Flow')
