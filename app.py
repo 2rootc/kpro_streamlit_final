@@ -1,6 +1,12 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import ssl
+import urllib.request
+from io import BytesIO
+
+# SSL 오류 회피 (Streamlit Cloud에서 발생할 수 있음)
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # 한글 폰트 설정 (Windows 환경 기준)
 plt.rcParams['font.family'] = 'Malgun Gothic'
@@ -17,10 +23,10 @@ RAW_BASE = f"https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/main/{FI
 
 # 불러올 파일들
 file_dict = {
-    "2023_광역": "2023_광역.xls",
-    "2023_지방": "2023_지방.xls",
-    "2024_광역": "2024_광역.xls",
-    "2024_지방": "2024_지방.xls"
+    "2023_광역": "2023_광역.xlsx",
+    "2023_지방": "2023_지방.xlsx",
+    "2024_광역": "2024_광역.xlsx",
+    "2024_지방": "2024_지방.xlsx"
 }
 
 # 읽기 및 병합
@@ -28,7 +34,9 @@ dfs = {}
 try:
     for key, fname in file_dict.items():
         url = RAW_BASE + fname
-        dfs[key] = pd.read_excel(url, engine='xlrd').iloc[1:-1, :]
+        response = urllib.request.urlopen(url)
+        excel_data = BytesIO(response.read())
+        dfs[key] = pd.read_excel(excel_data).iloc[1:-1, :]
 
     # 연도별 병합
     광역 = pd.concat([dfs["2023_광역"], dfs["2024_광역"]], ignore_index=True)
