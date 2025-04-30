@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import ssl
 import urllib.request
 from io import BytesIO
-import chardet
+import urllib.parse
 
 # SSL 오류 회피 (Streamlit Cloud에서 발생할 수 있음)
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -55,5 +55,8 @@ try:
     st.success("\u2705 GitHub에서 데이터 불러오기 및 병합 완료!")
     st.dataframe(df.head())
 
+except ModuleNotFoundError as me:
+    st.error("\u274c 필수 라이브러리가 설치되어 있지 않습니다. requirements.txt 또는 pip install 로 누락된 패키지를 설치하세요.")
+    st.code(str(me))
 except Exception as e:
     st.error("\u274c 파일을 불러오는 도중 오류 발생: " + str(e))
