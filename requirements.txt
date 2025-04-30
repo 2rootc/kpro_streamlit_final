@@ -1,6 +1,4 @@
-numpy
+streamlit
 pandas
-scipy
-scikit-learn
 matplotlib
-xgboost
+xlrd
