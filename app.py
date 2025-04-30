@@ -63,6 +63,21 @@ try:
     st.success("\u2705 데이터 불러오기 및 병합 및 컬럼명 지정 완료!")
     st.dataframe(df.head())
 
+    # MK 및 JM 유량 처리
+    cutoff = pd.to_datetime("2024-09-23 15:00")
+    df['MK_Tank_Flow'] = np.where(
+        df.index < cutoff,
+        df['MK_Tank_Flow#1(old)'],
+        df['MK_Tank_Flow#2(new)']
+    )
+    df.drop(['MK_Tank_Flow#1(old)', 'MK_Tank_Flow#2(new)'], axis=1, inplace=True)
+    df.drop(columns=['JM_Tank_Flow#1(new)'], inplace=True)
+    df.rename(columns={'JM_Tank_Flow#2(old)': 'JM_Tank_Flow'}, inplace=True)
+
+    # 기준 시점 이후 데이터 제거
+    cutoff = pd.to_datetime("2024-10-19 00:00")
+    df = df[df.index < cutoff]
+
     # object → numeric 변환
     df = df.replace({',': ''}, regex=True)
     df = df.replace({'-': pd.NA})
