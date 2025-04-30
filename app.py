@@ -2,8 +2,14 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# 한글 폰트 설정 (Windows 환경 기준)
-plt.rcParams['font.family'] = 'Malgun Gothic'
+# 한글 폰트 설정 (자동 환경 감지)
+import platform
+if platform.system() == 'Windows':
+    plt.rcParams['font.family'] = 'Malgun Gothic'
+elif platform.system() == 'Darwin':
+    plt.rcParams['font.family'] = 'AppleGothic'
+else:
+    plt.rcParams['font.family'] = 'DejaVu Sans'
 plt.rcParams['axes.unicode_minus'] = False
 
 st.title("광역 및 지방 데이터 통합 앱")
