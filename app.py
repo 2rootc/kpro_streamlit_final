@@ -78,9 +78,9 @@ try:
         fig, ax = plt.subplots(figsize=(12, 5))
         for col in selected_columns:
             ax.plot(numeric_data.index, numeric_data[col], label=col)
-        ax.set_title("선택된 항목 시계열 그래프")
-        ax.set_xlabel('날짜')
-        ax.set_ylabel('값')
+        ax.set_title("Selected Time Series")
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Value')
         ax.legend()
         ax.grid(True)
         st.pyplot(fig)
