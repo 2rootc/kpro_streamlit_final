@@ -182,38 +182,29 @@ try:
     st.dataframe(performance_df)
 
     # 예측 그래프 시각화
-    n_cols = 2
-    n_rows = math.ceil(len(site_codes) / n_cols)
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 7, n_rows * 4))
-    axes = axes.flatten()
+    st.subheader("📈 예측 결과 시각화")
+    selected_site = st.selectbox("예측 결과를 확인할 배수지를 선택하세요:", site_codes)
 
-    for i, code in enumerate(site_codes):
-        col_name = f'{code}_Tank_Flow'
-        if col_name not in processed_df.columns:
-            continue
+    col_name = f'{selected_site}_Tank_Flow'
+    df_prophet = processed_df[[col_name]].copy()
+    df_prophet['ds'] = processed_df.index
+    df_prophet.rename(columns={col_name: 'y'}, inplace=True)
+    df_prophet = df_prophet[['ds', 'y']]
 
-        df_prophet = processed_df[[col_name]].copy()
-        df_prophet['ds'] = processed_df.index
-        df_prophet.rename(columns={col_name: 'y'}, inplace=True)
-        df_prophet = df_prophet[['ds', 'y']]
+    model = Prophet()
+    model.fit(df_prophet)
+    future = model.make_future_dataframe(periods=forecast_period, freq='H')
+    forecast = model.predict(future)
 
-        model = Prophet()
-        model.fit(df_prophet)
-        future = model.make_future_dataframe(periods=forecast_period, freq='H')
-        forecast = model.predict(future)
-
-        axes[i].plot(df_prophet['ds'], df_prophet['y'], label='Actual', color='blue')
-        axes[i].plot(forecast['ds'], forecast['yhat'], label='Forecast', color='orange')
-        axes[i].fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], color='orange', alpha=0.2)
-        axes[i].set_title(f'{code}_Tank_Flow Forecast vs Actual')
-        axes[i].set_xlabel('Date')
-        axes[i].set_ylabel('Flow')
-        axes[i].legend()
-
-    for j in range(len(site_codes), len(axes)):
-        fig.delaxes(axes[j])
-
-    plt.tight_layout()
+    fig, ax = plt.subplots(figsize=(12, 5))
+    ax.plot(df_prophet['ds'], df_prophet['y'], label='Actual', color='blue')
+    ax.plot(forecast['ds'], forecast['yhat'], label='Forecast', color='orange')
+    ax.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], color='orange', alpha=0.2)
+    ax.set_title(f'{selected_site} Tank Flow Forecast vs Actual')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Flow')
+    ax.legend()
+    ax.grid(True)
     st.pyplot(fig)
 
 
